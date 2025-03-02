@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: movie_db
+    environment:
+      POSTGRES_USER: movie_user
+      POSTGRES_PASSWORD: movie_password
+      POSTGRES_DB: movie_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATBASE_NAME: movie_db
+      DATABASE_USER: movie_user
+      DATABASE_PASSWORD: movie_password
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      FRONTEND_HOST: "localhost"
+      FRONTEND_PORT: 4173
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
